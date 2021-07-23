@@ -79,6 +79,21 @@ module Enumerable
     return true
   end
 
+  def my_count()
+  end
+
+  def my_map()
+    new_array = []
+    if block_given?
+      self.my_each do |item|
+        new_item = yield item
+        new_array << new_item
+      end
+      return new_array
+    end
+    return self.to_enum(:my_map)
+  end
+
 end
 
 puts "my_each vs. each"
@@ -121,3 +136,13 @@ puts [1, 3, 42].none?(Float)
 puts [1, 3, 42].none?(Float)
 puts numbers.my_none?
 puts numbers.none?
+
+puts "\nmy_count vs count"
+
+
+puts "\nmy_map vs map"
+puts "Block given:"
+puts numbers.my_map { |num| num * num }
+puts numbers.map { |num| num * num }
+p numbers.my_map
+p numbers.map
