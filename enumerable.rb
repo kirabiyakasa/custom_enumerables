@@ -1,3 +1,5 @@
+require 'pry'
+
 module Enumerable
 
   def my_each()
@@ -79,7 +81,18 @@ module Enumerable
     return true
   end
 
-  def my_count()
+  def my_count(*args)
+    num = 0
+    if args.length > 0
+      num = self.my_count { |item| args[0] === item }
+    elsif block_given?
+      self.my_each do |item|
+        num += 1 if yield item
+      end
+    else
+      num = self.my_count { |item| Object === item }
+    end
+    return num
   end
 
   def my_map()
@@ -94,6 +107,29 @@ module Enumerable
     return self.to_enum(:my_map)
   end
 
+  def my_inject(*args)
+    raise "big error" if args.length > 1
+    collection = self.to_a if Range === self
+    collection = self if Array === self
+
+    Numeric === args[0] ? accumulator = args[0] : accumulator = collection[0]
+
+    if block_given?
+      collection.my_each_with_index do |item, i|
+        next if (Numeric === args[0]) == false && i == 0
+        accumulator = yield accumulator, item if Array === collection
+      end
+    else
+      raise "no block given"
+    end
+    return accumulator
+  end
+
+end
+
+def multiply_els(array)
+  product = array.my_inject { |product, n| product * n }
+  return product
 end
 
 puts "my_each vs. each"
@@ -138,11 +174,29 @@ puts numbers.my_none?
 puts numbers.none?
 
 puts "\nmy_count vs count"
-
+puts "Block not given:"
+puts numbers.my_count
+puts numbers.count
+puts numbers.my_count(2)
+puts numbers.count(2)
+puts "Block given:"
+puts numbers.my_count { |num| num > 3 }
+puts numbers.count { |num| num > 3 }
 
 puts "\nmy_map vs map"
 puts "Block given:"
-puts numbers.my_map { |num| num * num }
-puts numbers.map { |num| num * num }
+p numbers.my_map { |num| num * num }
+p numbers.map { |num| num * num }
+puts "With a proc:"
+multiply_nums = Proc.new { |num| num * num }
+p numbers.my_map(&multiply_nums)
+puts "Block not given:"
 p numbers.my_map
 p numbers.map
+
+puts "\nmy_insert vs insert"
+puts "Block given:"
+puts (5..10).inject { |sum, n| sum + n }
+puts (5..10).my_inject { |sum, n| sum + n }
+puts numbers.my_inject { |product, n| product * n }
+puts multiply_els(numbers)
